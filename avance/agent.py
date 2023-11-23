@@ -326,7 +326,6 @@ class Car(Agent):
                 print(gridEND)
                 #return gridEND
 
-
 #--------------------------------------------------------------------------------------------------------------------------------
         if gridEND is not None:
 
@@ -354,6 +353,10 @@ class Car(Agent):
         # print(gridUP.grid_str())
         # print(gridDOWN.grid_str())
 
+        """
+        If agent self.position is the same as Destination position, delete the agent.
+        """
+
 
     def move_to_next(self):
         if self.current_step < len(self.path):
@@ -366,6 +369,7 @@ class Car(Agent):
         Determines the new direction it will take, and then moves
         """
         self.move_to_next()
+
 
 
 class Traffic_Light(Agent):
