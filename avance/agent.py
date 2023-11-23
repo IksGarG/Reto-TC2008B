@@ -285,26 +285,67 @@ class Car(Agent):
         })
 
         finder = AStarFinder()
-        #path, _ = finder.find_path(gridUP.node(0, 24), gridUP.node(12, 15), world)
-        #self.path = path
 
-        print(self.position)
-        if self.position == (0, 24):
-            path, _ = finder.find_path(gridUP.node(0, 24), gridRIGHT.node(19, 2), world)
-            self.path = path
 
-        elif self.position == (23, 24):
-            path, _ = finder.find_path(gridDOWN.node(23, 24), gridRIGHT.node(19, 2), world)
-            self.path = path
-
-        elif self.position == (23, 0):
-            path, _ = finder.find_path(gridDOWN.node(23, 0), gridRIGHT.node(19, 2), world)
-            self.path = path
-
-        elif self.position == (0, 0):
-            path, _ = finder.find_path(gridRIGHT.node(0, 0), gridRIGHT.node(19, 2), world)
-            self.path = path
+#--------------------------------------------------------------------------------------------------------------------------------
+        destinations = [agent for agent in self.model.schedule.agents if isinstance(agent, Destination)]
         
+        if destinations:
+            random_destination = self.random.choice(destinations)  # Select a random Destination agent
+            print(random_destination.pos)
+
+            neighbors = self.model.grid.get_neighbors(
+                random_destination.pos,
+                moore=False,  # Include diagonals
+                include_center=False)
+        
+        road_near_destination = [agent for agent in neighbors if isinstance(agent, Road)]  # Select the road near the destination
+
+        print(road_near_destination[0].direction)
+
+        gridEND = None  # Default value
+        if road_near_destination:
+            road_direction = road_near_destination[0].direction
+            if road_direction == "Down":
+                gridEND = gridUP.node(random_destination.pos[0], random_destination.pos[1])
+                print(gridEND)
+                #return gridEND
+            
+            elif road_direction == "Up":
+                gridEND = gridDOWN.node(random_destination.pos[0], random_destination.pos[1])
+                print(gridEND)
+                #return gridEND
+            
+            elif road_direction == "Right":
+                gridEND = gridRIGHT.node(random_destination.pos[0], random_destination.pos[1])
+                print(gridEND)
+                #return gridEND
+            
+            elif road_direction == "Left":
+                gridEND = gridLEFT.node(random_destination.pos[0], random_destination.pos[1])
+                print(gridEND)
+                #return gridEND
+
+
+#--------------------------------------------------------------------------------------------------------------------------------
+        if gridEND is not None:
+
+            if self.position == (0, 24):
+                path, _ = finder.find_path(gridUP.node(0, 24), gridEND, world)
+                self.path = path
+
+            elif self.position == (23, 24):
+                path, _ = finder.find_path(gridDOWN.node(23, 24), gridEND, world)
+                self.path = path
+
+            elif self.position == (23, 0):
+                path, _ = finder.find_path(gridDOWN.node(23, 0), gridEND, world)
+                self.path = path
+
+            elif self.position == (0, 0):
+                path, _ = finder.find_path(gridRIGHT.node(0, 0), gridEND, world)
+                self.path = path
+            
 
         # print([tuple(p) for p in path])
         # print(gridMAP.grid_str(path=path, start=gridUP.node(0, 24), end=gridRIGHT.node(19, 2)))
@@ -313,12 +354,7 @@ class Car(Agent):
         # print(gridUP.grid_str())
         # print(gridDOWN.grid_str())
 
-    def random_destination(self):
-        """
-        Selects a random destination for the car to go to.
-        """
 
-        
     def move_to_next(self):
         if self.current_step < len(self.path):
             x, y, z = self.path[self.current_step]
@@ -329,8 +365,8 @@ class Car(Agent):
         """ 
         Determines the new direction it will take, and then moves
         """
-        
         self.move_to_next()
+
 
 class Traffic_Light(Agent):
     """
