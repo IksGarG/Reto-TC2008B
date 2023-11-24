@@ -221,7 +221,6 @@ class Car(Agent):
         
     def move(self):
         max_waiting_time = 20  # Define a threshold for maximum waiting time
-        print(self.waiting_time)
         if self.current_step < len(self.path):
             next_position = self.path[self.current_step]
             x, y = next_position.x, next_position.y
