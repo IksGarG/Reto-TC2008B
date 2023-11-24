@@ -62,11 +62,16 @@ class CityModel(Model):
         agent_positions = [(0, 0), (23, 0), (0, 24), (23, 24)]
 
         for i, pos in enumerate(agent_positions):
-            position = agent_positions[i]
-            car = Car(i + 1000 + self.next_agents, self, position)  # Assuming Car class takes an ID and a model instance
-            self.schedule.add(car)
-            self.grid.place_agent(car, pos)
-            self.next_agents += 2
+            # Check the contents of the position
+            position_contents = self.grid.get_cell_list_contents(pos)
+
+            # Check if there is only a road agent at the position
+            if any(isinstance(agent, Road) for agent in position_contents) and not any(isinstance(agent, Car) for agent in position_contents):
+                car = Car(i + 1000 + self.next_agents, self, pos)
+                self.schedule.add(car)
+                self.grid.place_agent(car, pos)
+                self.next_agents += 2
+            else: self.next_agents += 2
 
 
     def step(self):
@@ -75,6 +80,6 @@ class CityModel(Model):
             agent = self.kill_list.pop()
             self.schedule.remove(agent)
             self.grid.remove_agent(agent)
-        if self.schedule.steps % 8 == 0:
+        if self.schedule.steps % 5 == 0:
             self.add_car()
         self.schedule.step()
