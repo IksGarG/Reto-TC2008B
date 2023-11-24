@@ -241,4 +241,4 @@ def create_world():
     })
 
 def get_finder():
-    return AStarFinder(diagonal_movement=DiagonalMovement.if_at_most_one_obstacle)
+    return AStarFinder(diagonal_movement=DiagonalMovement.always)

@@ -43,7 +43,7 @@ class Car(Agent):
         return random_destination, road_near_destination
 
     def is_path_clear(self):
-        lookahead_steps = 2 # How many steps to look ahead
+        lookahead_steps = 1 # How many steps to look ahead
         front_neighbor_pos = self.get_front_neighbor_position()
         contents = self.model.grid.get_cell_list_contents(front_neighbor_pos)
         if any(isinstance(obj, Car) and obj != self for obj in contents):
@@ -136,8 +136,6 @@ class Car(Agent):
 
         if current_road_segment is not None:
             self.choose_new_grid_based_on_road(current_road_segment)
-        else:
-            pass  # Do nothing if the car is not on a road
 
     def choose_new_grid_based_on_road(self, road_segment):
         road_direction = road_segment.direction
@@ -200,12 +198,12 @@ class Car(Agent):
         current_road = self.model.grid.get_cell_list_contents([self.pos])[0]
         direction = current_road.direction
 
-        # Define potential move positions based on direction
+        # Define potential move positions with diagonal options first
         move_options = {
-            "Up": [(self.pos[0], self.pos[1] + 1), (self.pos[0] + 1, self.pos[1] + 1), (self.pos[0] - 1, self.pos[1] + 1)],
-            "Down": [(self.pos[0], self.pos[1] - 1), (self.pos[0] + 1, self.pos[1] - 1), (self.pos[0] - 1, self.pos[1] - 1)],
-            "Right": [(self.pos[0] + 1, self.pos[1]), (self.pos[0] + 1, self.pos[1] + 1), (self.pos[0] + 1, self.pos[1] - 1)],
-            "Left": [(self.pos[0] - 1, self.pos[1]), (self.pos[0] - 1, self.pos[1] + 1), (self.pos[0] - 1, self.pos[1] - 1)],
+            "Up": [(self.pos[0] + 1, self.pos[1] + 1), (self.pos[0] - 1, self.pos[1] + 1), (self.pos[0], self.pos[1] + 1)],
+            "Down": [(self.pos[0] + 1, self.pos[1] - 1), (self.pos[0] - 1, self.pos[1] - 1), (self.pos[0], self.pos[1] - 1)],
+            "Right": [(self.pos[0] + 1, self.pos[1] + 1), (self.pos[0] + 1, self.pos[1] - 1), (self.pos[0] + 1, self.pos[1])],
+            "Left": [(self.pos[0] - 1, self.pos[1] + 1), (self.pos[0] - 1, self.pos[1] - 1), (self.pos[0] - 1, self.pos[1])],
         }
 
         grid_width = self.model.grid.width
@@ -223,7 +221,6 @@ class Car(Agent):
         
     def move(self):
         max_waiting_time = 20  # Define a threshold for maximum waiting time
-        print(self.waiting_time)
         if self.current_step < len(self.path):
             next_position = self.path[self.current_step]
             x, y = next_position.x, next_position.y
