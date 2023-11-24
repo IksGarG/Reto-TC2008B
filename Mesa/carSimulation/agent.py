@@ -220,7 +220,7 @@ class Car(Agent):
 
         
     def move(self):
-        max_waiting_time = 20  # Define a threshold for maximum waiting time
+        max_waiting_time = self.random.randint(10, 20) # Select a random value between 10 and 20 to simulate different behaviors of drivers
         if self.current_step < len(self.path):
             next_position = self.path[self.current_step]
             x, y = next_position.x, next_position.y
