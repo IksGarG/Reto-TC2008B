@@ -4,6 +4,8 @@ from mesa.space import MultiGrid
 from agent import *
 import json
 
+from GridGen.grid_gen import gDown, gUp, gLeft, gRight, get_finder, create_world
+
 class CityModel(Model):
     """ 
         Creates a model based on a city map.
@@ -18,6 +20,9 @@ class CityModel(Model):
 
         self.traffic_lights = []
         self.next_agents = 0
+        self.finder = get_finder()
+        self.world = create_world()
+        self.kill_list = []
 
         # Load the map file. The map file is a text file where each character represents an agent.
         with open('city_files/2022_base.txt') as baseFile:
@@ -66,6 +71,10 @@ class CityModel(Model):
 
     def step(self):
         '''Advance the model by one step.'''
-        if self.schedule.steps % 10 == 0:
+        while self.kill_list:
+            agent = self.kill_list.pop()
+            self.schedule.remove(agent)
+            self.grid.remove_agent(agent)
+        if self.schedule.steps % 8 == 0:
             self.add_car()
         self.schedule.step()
