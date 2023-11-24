@@ -1,7 +1,6 @@
 from mesa import Agent
-from pathfinding.core.grid import Grid
 from pathfinding.core.world import World
-from pathfinding.finder.a_star import AStarFinder
+from GridGen.grid_gen import gDown, gUp, gLeft, gRight
 
 class Car(Agent):
     """
@@ -21,278 +20,19 @@ class Car(Agent):
         self.path = []
         self.current_step = 0
         self.position = initial_pos
-        self.move()
+        self.init_path_gen()
+        self.waiting_time = 0
+        self.random_destination, self.road_near_destination = self.destination()
 
-    def move(self):
+    def grid_cleanup(self, world):
+        for grid in world.grids.values():
+            grid.cleanup()
 
-        gridD = [
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1],
-            [0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0] 
-        ]
-        # Up Grid
-        gridU = [
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        ]
-        # Right Grid
-        gridR = [
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], 
-        ]
-        # Left Grid
-        gridL = [
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0] 
-        ]
-
-        gridMap = [
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1],
-            [1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
-        ]
-        souvenierRoad = [
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1] 
-        ]
-
-
-        # Create the Grids
-
-        gridUP = Grid(matrix=gridU, grid_id=0)
-        gridDOWN = Grid(matrix=gridD, grid_id=1)
-        gridRIGHT = Grid(matrix=gridR, grid_id=2)
-        gridLEFT = Grid(matrix=gridL, grid_id=3)
-        gridMAP = Grid(matrix=gridMap, grid_id=4)
-        gridSouvenierRoad = Grid(matrix=souvenierRoad, grid_id=5)
-
-        # Grid Connections UP
-        gridUP.node(0, 1).connect(gridRIGHT.node(0, 0))
-        gridUP.node(1, 2).connect(gridRIGHT.node(1, 1))
-        gridUP.node(6, 2).connect(gridRIGHT.node(6, 1))
-        gridUP.node(7, 2).connect(gridRIGHT.node(7, 1))
-        gridUP.node(13, 2).connect(gridRIGHT.node(13, 1))
-        gridUP.node(14, 2).connect(gridRIGHT.node(14, 1))
-        gridUP.node(12, 10).connect(gridRIGHT.node(13, 9))
-        gridUP.node(13, 10).connect(gridRIGHT.node(14, 9))
-        gridUP.node(13, 13).connect(gridLEFT.node(13, 12))
-        gridUP.node(14, 13).connect(gridLEFT.node(14, 12))
-        gridUP.node(1, 9).connect(gridRIGHT.node(2, 9))
-        gridUP.node(1, 8).connect(gridRIGHT.node(2, 8))
-        gridUP.node(13, 18).connect(gridLEFT.node(12, 18))
-        gridUP.node(13, 17).connect(gridLEFT.node(12, 17))
-        gridUP.node(0, 14).connect(gridUP.node(0, 12))
-        gridUP.node(1, 14).connect(gridUP.node(1, 12))
-
-        # Grid Connections DOWN
-        gridDOWN.node(23, 23).connect(gridSouvenierRoad.node(23, 24))
-        gridDOWN.node(22, 22).connect(gridSouvenierRoad.node(22, 23))
-        gridDOWN.node(22, 10).connect(gridLEFT.node(22, 11))
-        gridDOWN.node(23, 10).connect(gridLEFT.node(23, 11))
-        gridDOWN.node(17, 10).connect(gridLEFT.node(16, 11))
-        gridDOWN.node(18, 10).connect(gridLEFT.node(17, 11))
-        gridDOWN.node(6, 16).connect(gridLEFT.node(6, 17))
-        gridDOWN.node(7, 16).connect(gridLEFT.node(7, 17))
-        gridDOWN.node(16, 22).connect(gridLEFT.node(16, 23))
-        gridDOWN.node(17, 22).connect(gridLEFT.node(17, 23))
-        gridDOWN.node(16, 7).connect(gridRIGHT.node(16, 8))
-        gridDOWN.node(17, 7).connect(gridRIGHT.node(17, 8))
-        gridDOWN.node(6, 16).connect(gridLEFT.node(5, 17))
-        gridDOWN.node(7, 16).connect(gridLEFT.node(6, 17))
-
-        # Grid Connections RIGHT
-        gridRIGHT.node(22, 0).connect(gridDOWN.node(23, 0))
-        gridRIGHT.node(22, 1).connect(gridDOWN.node(22, 2))
-        gridRIGHT.node(21, 8).connect(gridDOWN.node(22, 8))
-        gridRIGHT.node(21, 9).connect(gridDOWN.node(22, 9))
-        gridRIGHT.node(6, 8).connect(gridUP.node(6, 7))
-        gridRIGHT.node(7, 8).connect(gridUP.node(7, 7))
-        gridRIGHT.node(13, 8).connect(gridUP.node(13, 7))
-        gridRIGHT.node(14, 8).connect(gridUP.node(14, 7))
-        gridRIGHT.node(16, 9).connect(gridDOWN.node(17, 10))
-        gridRIGHT.node(17, 9).connect(gridDOWN.node(18, 10))
-        gridRIGHT.node(16, 1).connect(gridDOWN.node(16, 2))
-        gridRIGHT.node(17, 1).connect(gridDOWN.node(17, 2))
-
-
-        # Grid Connections LEFT
-        gridLEFT.node(1, 24).connect(gridUP.node(0, 24))
-        gridLEFT.node(1, 23).connect(gridUP.node(0, 23))
-        gridLEFT.node(1, 23).connect(gridUP.node(1, 22))
-        gridLEFT.node(2, 18).connect(gridUP.node(1, 18))
-        gridLEFT.node(2, 17).connect(gridUP.node(1, 17))
-        gridLEFT.node(2, 12).connect(gridUP.node(1, 12))
-        gridLEFT.node(2, 11).connect(gridUP.node(1, 11))
-        gridLEFT.node(13, 11).connect(gridUP.node(12, 10))
-        gridLEFT.node(14, 11).connect(gridUP.node(13, 10))
-        gridLEFT.node(17, 12).connect(gridDOWN.node(17, 13))
-        gridLEFT.node(16, 12).connect(gridDOWN.node(16, 13))
-        gridLEFT.node(7, 12).connect(gridDOWN.node(7, 13))
-        gridLEFT.node(6, 12).connect(gridDOWN.node(6, 13))
-        gridLEFT.node(14, 23).connect(gridUP.node(14, 22))
-        gridLEFT.node(13, 23).connect(gridUP.node(13, 22))
-        gridLEFT.node(23, 12).connect(gridDOWN.node(23, 13))
-        gridLEFT.node(22, 12).connect(gridDOWN.node(22, 13))
-
-        # Grid Souvenier Road
-        gridSouvenierRoad.node(18, 23).connect(gridLEFT.node(17, 23))
-        gridSouvenierRoad.node(18, 24).connect(gridLEFT.node(17, 24))
-
-        # Make the world
-
-        world = World({
-            0: gridUP,
-            1: gridDOWN,
-            2: gridRIGHT,
-            3: gridLEFT,
-            5: gridSouvenierRoad,
-        })
-
-        finder = AStarFinder()
-
-
-#--------------------------------------------------------------------------------------------------------------------------------
+    def destination(self):
         destinations = [agent for agent in self.model.schedule.agents if isinstance(agent, Destination)]
         
         if destinations:
             random_destination = self.random.choice(destinations)  # Select a random Destination agent
-            print(random_destination.pos)
 
             neighbors = self.model.grid.get_neighbors(
                 random_destination.pos,
@@ -300,76 +40,218 @@ class Car(Agent):
                 include_center=False)
         
         road_near_destination = [agent for agent in neighbors if isinstance(agent, Road)]  # Select the road near the destination
+        return random_destination, road_near_destination
 
-        print(road_near_destination[0].direction)
+    def is_path_clear(self):
+        lookahead_steps = 2 # How many steps to look ahead
+        front_neighbor_pos = self.get_front_neighbor_position()
+        contents = self.model.grid.get_cell_list_contents(front_neighbor_pos)
+        if any(isinstance(obj, Car) and obj != self for obj in contents):
+            return False
+        
+        # Check the upcoming positions in the path
+        for step in range(self.current_step, min(self.current_step + lookahead_steps, len(self.path))):
+            grid_node = self.path[step]
+            x, y = grid_node.x, grid_node.y  # Directly access x and y from the GridNode object
+            path_contents = self.model.grid.get_cell_list_contents((x, y))
+            if any(isinstance(obj, Car) and obj != self for obj in path_contents):
+                return False
+        return True
 
-        gridEND = None  # Default value
+    def is_light_green(self):
+        front_neighbor_pos = self.get_front_neighbor_position()
+        contents = self.model.grid.get_cell_list_contents(front_neighbor_pos)
+        traffic_lights = [obj for obj in contents if isinstance(obj, Traffic_Light)]    
+        if traffic_lights:
+            return traffic_lights[0].state == True
+        return True  # If no traffic light, assume it's okay to move
+
+    def get_front_neighbor_position(self):
+        """
+        Get the position of the front-facing neighbor based on the road direction.
+        """
+        current_road = self.model.grid.get_cell_list_contents([self.pos])[0]
+        direction = current_road.direction
+
+        if direction == "Up":
+            return (self.pos[0], self.pos[1] + 1)
+        elif direction == "Down":
+            return (self.pos[0], self.pos[1] - 1)
+        elif direction == "Right":
+            return (self.pos[0] + 1, self.pos[1])
+        elif direction == "Left":
+            return (self.pos[0] - 1, self.pos[1])
+
+
+    def init_path_gen(self):
+
+        random_destination, road_near_destination = self.destination()
+
+        gridEND = None # Default value
+
         if road_near_destination:
             road_direction = road_near_destination[0].direction
             if road_direction == "Down":
-                gridEND = gridUP.node(random_destination.pos[0], random_destination.pos[1])
-                print(gridEND)
-                #return gridEND
+                gridEND = gUp.node(random_destination.pos[0], random_destination.pos[1])
+                self.gridEND = gridEND
             
             elif road_direction == "Up":
-                gridEND = gridDOWN.node(random_destination.pos[0], random_destination.pos[1])
-                print(gridEND)
-                #return gridEND
+                gridEND = gDown.node(random_destination.pos[0], random_destination.pos[1])
+                self.gridEND = gridEND
             
             elif road_direction == "Right":
-                gridEND = gridRIGHT.node(random_destination.pos[0], random_destination.pos[1])
-                print(gridEND)
-                #return gridEND
+                gridEND = gRight.node(random_destination.pos[0], random_destination.pos[1])
+                self.gridEND = gridEND
             
             elif road_direction == "Left":
-                gridEND = gridLEFT.node(random_destination.pos[0], random_destination.pos[1])
-                print(gridEND)
-                #return gridEND
+                gridEND = gLeft.node(random_destination.pos[0], random_destination.pos[1])
+                self.gridEND = gridEND
 
-#--------------------------------------------------------------------------------------------------------------------------------
         if gridEND is not None:
 
             if self.position == (0, 24):
-                path, _ = finder.find_path(gridUP.node(0, 24), gridEND, world)
+                self.grid_cleanup(self.model.world)
+                path, _ = self.model.finder.find_path(gUp.node(0, 24), gridEND, self.model.world)
                 self.path = path
 
+
             elif self.position == (23, 24):
-                path, _ = finder.find_path(gridDOWN.node(23, 24), gridEND, world)
+                self.grid_cleanup(self.model.world)
+                path, _ = self.model.finder.find_path(gLeft.node(23, 24), gridEND, self.model.world)
                 self.path = path
 
             elif self.position == (23, 0):
-                path, _ = finder.find_path(gridDOWN.node(23, 0), gridEND, world)
+                self.grid_cleanup(self.model.world)
+                path, _ = self.model.finder.find_path(gDown.node(23, 0), gridEND, self.model.world)
                 self.path = path
 
             elif self.position == (0, 0):
-                path, _ = finder.find_path(gridRIGHT.node(0, 0), gridEND, world)
+                self.grid_cleanup(self.model.world)
+                path, _ = self.model.finder.find_path(gRight.node(0, 0), gridEND, self.model.world)
                 self.path = path
+
+    def recalculate_path(self):
+        current_cell_contents = self.model.grid.get_cell_list_contents([self.pos])
+        current_road_segment = next((obj for obj in current_cell_contents if isinstance(obj, Road) and obj != self), None)
+
+        if current_road_segment is not None:
+            self.choose_new_grid_based_on_road(current_road_segment)
+        else:
+            pass  # Do nothing if the car is not on a road
+
+    def choose_new_grid_based_on_road(self, road_segment):
+        road_direction = road_segment.direction
+
+        if road_direction == "Up":
+            start = gDown.node(self.pos[0], self.pos[1])
+        elif road_direction == "Down":
+            start = gUp.node(self.pos[0], self.pos[1])
+        elif road_direction == "Right":
+            start = gRight.node(self.pos[0], self.pos[1])
+        elif road_direction == "Left":
+            start = gLeft.node(self.pos[0], self.pos[1])
+
+        self.recalculate_a_star_path(start)
+    
+    def recalculate_a_star_path(self, start):
+        # Your logic to recalculate the path using the A* algorithm
+        # Example:
+        random_destination, road_near_destination = self.random_destination, self.road_near_destination
+
+        gridEND = None # Default value
+
+        if road_near_destination:
+            road_direction = road_near_destination[0].direction
+            if road_direction == "Down":
+                gridEND = gUp.node(random_destination.pos[0], random_destination.pos[1])
+                self.gridEND = gridEND
             
+            elif road_direction == "Up":
+                gridEND = gDown.node(random_destination.pos[0], random_destination.pos[1])
+                self.gridEND = gridEND
+            
+            elif road_direction == "Right":
+                gridEND = gRight.node(random_destination.pos[0], random_destination.pos[1])
+                self.gridEND = gridEND
+            
+            elif road_direction == "Left":
+                gridEND = gLeft.node(random_destination.pos[0], random_destination.pos[1])
+                self.gridEND = gridEND
 
-        # print([tuple(p) for p in path])
-        # print(gridMAP.grid_str(path=path, start=gridUP.node(0, 24), end=gridRIGHT.node(19, 2)))
-        # print(gridRIGHT.grid_str())
-        # print(gridLEFT.grid_str())
-        # print(gridUP.grid_str())
-        # print(gridDOWN.grid_str())
+        self.grid_cleanup(self.model.world)
+        path, _ = self.model.finder.find_path(start, gridEND, self.model.world)
+        self.path = path
+        self.current_step = 0
 
-        """
-        If agent self.position is the same as Destination position, delete the agent.
-        """
+    def is_tile_empty_and_road(self, x, y):
+        # Check if the coordinates are within the grid boundaries
+        grid_width = self.model.grid.width
+        grid_height = self.model.grid.height
+        if x < 0 or y < 0 or x >= grid_width or y >= grid_height:
+            return False  # Coordinates are out of grid bounds
 
+        contents = self.model.grid.get_cell_list_contents((x, y))
+        if not contents:
+            return False  # Tile is not empty
 
-    def move_to_next(self):
+        return any(isinstance(obj, Road) for obj in contents)
+
+    def try_moving_to_adjacent_tile(self):
+        current_road = self.model.grid.get_cell_list_contents([self.pos])[0]
+        direction = current_road.direction
+
+        # Define potential move positions based on direction
+        move_options = {
+            "Up": [(self.pos[0], self.pos[1] + 1), (self.pos[0] + 1, self.pos[1] + 1), (self.pos[0] - 1, self.pos[1] + 1)],
+            "Down": [(self.pos[0], self.pos[1] - 1), (self.pos[0] + 1, self.pos[1] - 1), (self.pos[0] - 1, self.pos[1] - 1)],
+            "Right": [(self.pos[0] + 1, self.pos[1]), (self.pos[0] + 1, self.pos[1] + 1), (self.pos[0] + 1, self.pos[1] - 1)],
+            "Left": [(self.pos[0] - 1, self.pos[1]), (self.pos[0] - 1, self.pos[1] + 1), (self.pos[0] - 1, self.pos[1] - 1)],
+        }
+
+        grid_width = self.model.grid.width
+        grid_height = self.model.grid.height
+
+        for option in move_options.get(direction, []):
+            x, y = option
+            if x >= 0 and y >= 0 and x < grid_width and y < grid_height:
+                if self.is_tile_empty_and_road(x, y):
+                    self.model.grid.move_agent(self, option)
+                    return True
+
+        return False
+
+        
+    def move(self):
+        max_waiting_time = 20  # Define a threshold for maximum waiting time
+        print(self.waiting_time)
         if self.current_step < len(self.path):
-            x, y, z = self.path[self.current_step]
-            self.model.grid.move_agent(self, (x, y))  # Move to the next coordinate
-            self.current_step += 1  # Move to the next step in the path
+            next_position = self.path[self.current_step]
+            x, y = next_position.x, next_position.y
+
+            if self.is_path_clear() and self.is_light_green():
+                self.model.grid.move_agent(self, (x, y))
+                self.current_step += 1
+                self.waiting_time = 0  # Reset waiting time
+            else:
+                self.waiting_time += 1
+                if self.waiting_time > max_waiting_time:
+                    if self.try_moving_to_adjacent_tile():
+                        self.recalculate_path()
+                        self.waiting_time = 0
+                    else:
+                        return  # Do nothing if the car is stuck
+
+            if self.current_step == len(self.path):
+                self.model.kill_list.append(self)
+
+
+
 
     def step(self):
         """ 
         Determines the new direction it will take, and then moves
         """
-        self.move_to_next()
-
+        self.move()
 
 
 class Traffic_Light(Agent):
