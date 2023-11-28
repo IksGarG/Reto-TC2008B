@@ -26,7 +26,7 @@ class CityModel(Model):
         self.module = module
 
         # Load the map file. The map file is a text file where each character represents an agent.
-        with open('carSimulation/city_files/2022_base.txt') as baseFile:
+        with open('carSimulation/city_files/2023_base.txt') as baseFile:
             lines = baseFile.readlines()
             self.width = len(lines[0])-1
             self.height = len(lines)
