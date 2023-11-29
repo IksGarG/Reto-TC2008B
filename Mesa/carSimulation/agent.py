@@ -1,6 +1,6 @@
 from mesa import Agent
 from pathfinding.core.world import World
-from GridGen.grid_gen import gDown, gUp, gLeft, gRight
+from GridGen.grid_gen import gDown, gUp, gLeft, gRight, gMap
 
 class Car(Agent):
     """
@@ -190,12 +190,65 @@ class Car(Agent):
 
         contents = self.model.grid.get_cell_list_contents((x, y))
         if not contents:
-            return False  # Tile is not empty
+            return False  # Tile is empty, no road
 
-        return any(isinstance(obj, Road) for obj in contents)
+        # Check if there is a road, traffic light, and no car on the tile
+        is_valid_destination = False
+        for obj in contents:
+            if isinstance(obj, Road) or isinstance(obj, Traffic_Light):
+                is_valid_destination = True
+            elif isinstance(obj, Car):
+                return False  # Car is present, can't move here
+
+        return is_valid_destination
+
+    def calculate_next_position_based_on_traffic_light(self, x, y):
+        # Check neighboring tiles for a road that is not blocked by an obstacle or a car
+        neighbors = self.model.grid.get_neighborhood((x, y), moore=True, include_center=False)
+        for neighbor in neighbors:
+            if neighbor == (x, y):  # Skip the current position
+                continue
+
+            contents = self.model.grid.get_cell_list_contents(neighbor)
+            if any(isinstance(obj, Road) for obj in contents) and not any(isinstance(obj, (Car, Obstacle)) for obj in contents):
+                # Found a suitable road, use its direction
+                print("contents", contents)
+                road = next(obj for obj in contents if isinstance(obj, Road))
+                direction = road.direction
+                # Define the movement based on the direction
+                move_delta = {
+                    "Up": (0, 1),
+                    "Down": (0, -1),
+                    "Right": (1, 0),
+                    "Left": (-1, 0),
+                }
+                delta_x, delta_y = move_delta.get(direction, (0, 0))
+                next_x = x + delta_x
+                next_y = y + delta_y
+
+                # Ensure the next position is different from the current position
+                if (next_x, next_y) != (x, y) and 0 <= next_x < self.model.grid.width and 0 <= next_y < self.model.grid.height:
+                    return next_x, next_y
+
+        return None  # Return None if no suitable road found
+
+
 
     def try_moving_to_adjacent_tile(self):
-        current_road = self.model.grid.get_cell_list_contents([self.pos])[0]
+        current_tile_contents = self.model.grid.get_cell_list_contents([self.pos])
+
+        # Check if the current tile is a traffic light
+        if any(isinstance(obj, Traffic_Light) for obj in current_tile_contents):
+            next_position = self.calculate_next_position_based_on_traffic_light(*self.pos)
+            print("next_position", next_position)
+            if next_position and self.is_tile_empty_and_road(*next_position):
+                self.model.grid.move_agent(self, next_position)
+                return True
+            else:
+                return False
+
+        # If the current tile is not a traffic light, proceed with the original logic
+        current_road = next(obj for obj in current_tile_contents if isinstance(obj, Road))
         direction = current_road.direction
 
         # Define potential move positions with diagonal options first
@@ -213,36 +266,54 @@ class Car(Agent):
             x, y = option
             if x >= 0 and y >= 0 and x < grid_width and y < grid_height:
                 if self.is_tile_empty_and_road(x, y):
-                    self.model.grid.move_agent(self, option)
-                    return True
+                    contents = self.model.grid.get_cell_list_contents((x, y))
+                    if any(isinstance(obj, Traffic_Light) for obj in contents):
+                        # Calculate the next position based on the traffic light
+                        next_position = self.calculate_next_position_based_on_traffic_light(x, y)
+                        if next_position and self.is_tile_empty_and_road(*next_position):
+                            self.model.grid.move_agent(self, next_position)
+                            return True
+                    else:
+                        self.model.grid.move_agent(self, option)
+                        return True
 
         return False
 
         
     def move(self):
-        max_waiting_time = self.random.randint(10, 20) # Select a random value between 10 and 20 to simulate different behaviors of drivers
+        max_waiting_time = self.random.randint(10, 20)  # Random value for different driver behaviors
         if self.current_step < len(self.path):
             next_position = self.path[self.current_step]
             x, y = next_position.x, next_position.y
 
-            if self.is_path_clear() and self.is_light_green():
+            # Check if the current position is a traffic light
+            current_tile_contents = self.model.grid.get_cell_list_contents([self.pos])
+            on_traffic_light = any(isinstance(obj, Traffic_Light) for obj in current_tile_contents)
+
+            if on_traffic_light:
+                # If on a traffic light, try moving to an adjacent tile
+                if self.try_moving_to_adjacent_tile():
+                    self.recalculate_path()
+                    self.waiting_time = 0
+                else:
+                    return  # Do nothing if the car is stuck
+            elif self.is_path_clear() and self.is_light_green():
+                # Normal movement logic
                 self.model.grid.move_agent(self, (x, y))
                 self.current_step += 1
                 self.waiting_time = 0  # Reset waiting time
             else:
+                # Handling waiting at a red light or blocked path
                 self.waiting_time += 1
                 if self.waiting_time > max_waiting_time:
                     if self.try_moving_to_adjacent_tile():
                         self.recalculate_path()
                         self.waiting_time = 0
                     else:
-                        return  # Do nothing if the car is stuck
+                        pass # Do nothing if the car is stuck
 
             if self.current_step == len(self.path):
                 self.model.kill_list.append(self)
-
-
-
 
     def step(self):
         """ 

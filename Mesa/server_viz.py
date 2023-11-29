@@ -49,7 +49,7 @@ with open('carSimulation/city_files/2023_base.txt') as baseFile:
     width = len(lines[0])-1
     height = len(lines)
 
-model_params = {"module":4}
+model_params = {"module":2}
 
 print(width, height)
 grid = CanvasGrid(agent_portrayal, width, height, 500, 500)

@@ -31,18 +31,30 @@ def getAgents():
     global cityModel
 
     if request.method == 'GET':
-        agentPositions = [{"id": str(a.unique_id), "x": x, "y":1, "z":z} for a, (x, z) in cityModel.grid.coord_iter() if isinstance(a, Car)]
+        agentPositions = []
+        for cell_content, (x, z) in cityModel.grid.coord_iter():
+            # Asumiendo que cell_content es una lista de agentes
+            for agent in cell_content:
+                if isinstance(agent, Car):
+                    position = {"id": str(agent.unique_id), "x": x, "y": 1, "z": z}
+                    agentPositions.append(position)
 
-        return jsonify({'positions':agentPositions})
+        return jsonify({'positions': agentPositions})
 
-@app.route('/getObstacles', methods=['GET'])
-def getObstacles():
+@app.route('/getTrafficLights', methods=['GET'])
+def getTrafficLights():
     global cityModel
 
     if request.method == 'GET':
-        carPositions = [{"id": str(a.unique_id), "x": x, "y":1, "z":z} for a, (x, z) in cityModel.grid.coord_iter() if isinstance(a, Obstacle)]
+        trafficLightStates = []
+        for cell_content, (x, z) in cityModel.grid.coord_iter():
+            # Asumiendo que cell_content es una lista de agentes
+            for agent in cell_content:
+                if isinstance(agent, Traffic_Light):
+                    state_info = {"id": str(agent.unique_id), "x": x, "y": 1, "z": z, "state": agent.state}
+                    trafficLightStates.append(state_info)
 
-        return jsonify({'positions':carPositions})
+        return jsonify({'trafficLights': trafficLightStates})
 
 @app.route('/update', methods=['GET'])
 def updateModel():
