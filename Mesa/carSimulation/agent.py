@@ -1,6 +1,6 @@
 from mesa import Agent
 from pathfinding.core.world import World
-from GridGen.grid_gen import gDown, gUp, gLeft, gRight, gMap
+from GridGen.grid_gen import gDown, gUp, gLeft, gRight, gMap, gTls
 
 class Car(Agent):
     """
@@ -20,9 +20,10 @@ class Car(Agent):
         self.path = []
         self.current_step = 0
         self.position = initial_pos
+        self.random_destination, self.road_near_destination = self.destination()
         self.init_path_gen()
         self.waiting_time = 0
-        self.random_destination, self.road_near_destination = self.destination()
+        self.hidden_possible_coords = [(9, 16), (10, 16), (12, 11), (12, 12), (17, 11), (17, 12), (12, 8), (12, 9), (8, 8), (8, 11), (8, 12)]
 
     def grid_cleanup(self, world):
         for grid in world.grids.values():
@@ -68,24 +69,33 @@ class Car(Agent):
 
     def get_front_neighbor_position(self):
         """
-        Get the position of the front-facing neighbor based on the road direction.
+        Get the position of the front-facing neighbor based on the road direction,
+        if the current agent is on a road.
         """
-        current_road = self.model.grid.get_cell_list_contents([self.pos])[0]
-        direction = current_road.direction
+        contents = self.model.grid.get_cell_list_contents([self.pos])
 
-        if direction == "Up":
-            return (self.pos[0], self.pos[1] + 1)
-        elif direction == "Down":
-            return (self.pos[0], self.pos[1] - 1)
-        elif direction == "Right":
-            return (self.pos[0] + 1, self.pos[1])
-        elif direction == "Left":
-            return (self.pos[0] - 1, self.pos[1])
+        # Verificar si el contenido actual es un Road agent y tiene atributo 'direction'
+        if contents and isinstance(contents[0], Road) and hasattr(contents[0], 'direction'):
+            current_road = contents[0]
+            direction = current_road.direction
+
+            if direction == "Up":
+                return (self.pos[0], self.pos[1] + 1)
+            elif direction == "Down":
+                return (self.pos[0], self.pos[1] - 1)
+            elif direction == "Right":
+                return (self.pos[0] + 1, self.pos[1])
+            elif direction == "Left":
+                return (self.pos[0] - 1, self.pos[1])
+        else:
+            # Si no está en un Road agent o no tiene 'direction', manejar según sea necesario
+            # Por ejemplo, devolver la posición actual o alguna posición por defecto
+            return self.pos  # O alguna otra lógica según sea necesario
 
 
     def init_path_gen(self):
 
-        random_destination, road_near_destination = self.destination()
+        random_destination, road_near_destination = self.random_destination, self.road_near_destination
 
         gridEND = None # Default value
 
@@ -131,11 +141,22 @@ class Car(Agent):
                 self.path = path
 
     def recalculate_path(self):
-        current_cell_contents = self.model.grid.get_cell_list_contents([self.pos])
-        current_road_segment = next((obj for obj in current_cell_contents if isinstance(obj, Road) and obj != self), None)
+        if self.pos in self.hidden_possible_coords:
+            self.choose_new_grid_based_on_traffic_light()
+        else:
+            current_cell_contents = self.model.grid.get_cell_list_contents([self.pos])
+            current_road_segment = next((obj for obj in current_cell_contents if isinstance(obj, Road) and obj != self), None)
+            current_traffic_light = next((obj for obj in current_cell_contents if isinstance(obj, Traffic_Light) and obj != self), None)
 
-        if current_road_segment is not None:
-            self.choose_new_grid_based_on_road(current_road_segment)
+            if current_road_segment is not None:
+                self.choose_new_grid_based_on_road(current_road_segment)
+            elif current_traffic_light is not None:
+                self.choose_new_grid_based_on_traffic_light()
+        
+
+    def choose_new_grid_based_on_traffic_light(self):
+        start = gTls.node(self.pos[0], self.pos[1])
+        self.recalculate_a_star_path(start)
 
     def choose_new_grid_based_on_road(self, road_segment):
         road_direction = road_segment.direction
@@ -195,60 +216,22 @@ class Car(Agent):
         # Check if there is a road, traffic light, and no car on the tile
         is_valid_destination = False
         for obj in contents:
-            if isinstance(obj, Road) or isinstance(obj, Traffic_Light):
+            if isinstance(obj, Road) or isinstance(obj, Traffic_Light): # Road or traffic light is present
                 is_valid_destination = True
             elif isinstance(obj, Car):
                 return False  # Car is present, can't move here
 
         return is_valid_destination
 
-    def calculate_next_position_based_on_traffic_light(self, x, y):
-        # Check neighboring tiles for a road that is not blocked by an obstacle or a car
-        neighbors = self.model.grid.get_neighborhood((x, y), moore=True, include_center=False)
-        for neighbor in neighbors:
-            if neighbor == (x, y):  # Skip the current position
-                continue
-
-            contents = self.model.grid.get_cell_list_contents(neighbor)
-            if any(isinstance(obj, Road) for obj in contents) and not any(isinstance(obj, (Car, Obstacle)) for obj in contents):
-                # Found a suitable road, use its direction
-                print("contents", contents)
-                road = next(obj for obj in contents if isinstance(obj, Road))
-                direction = road.direction
-                # Define the movement based on the direction
-                move_delta = {
-                    "Up": (0, 1),
-                    "Down": (0, -1),
-                    "Right": (1, 0),
-                    "Left": (-1, 0),
-                }
-                delta_x, delta_y = move_delta.get(direction, (0, 0))
-                next_x = x + delta_x
-                next_y = y + delta_y
-
-                # Ensure the next position is different from the current position
-                if (next_x, next_y) != (x, y) and 0 <= next_x < self.model.grid.width and 0 <= next_y < self.model.grid.height:
-                    return next_x, next_y
-
-        return None  # Return None if no suitable road found
-
-
 
     def try_moving_to_adjacent_tile(self):
         current_tile_contents = self.model.grid.get_cell_list_contents([self.pos])
-
-        # Check if the current tile is a traffic light
-        if any(isinstance(obj, Traffic_Light) for obj in current_tile_contents):
-            next_position = self.calculate_next_position_based_on_traffic_light(*self.pos)
-            print("next_position", next_position)
-            if next_position and self.is_tile_empty_and_road(*next_position):
-                self.model.grid.move_agent(self, next_position)
-                return True
-            else:
-                return False
-
-        # If the current tile is not a traffic light, proceed with the original logic
-        current_road = next(obj for obj in current_tile_contents if isinstance(obj, Road))
+        current_road = next((obj for obj in current_tile_contents if isinstance(obj, Road) and obj != self), None)
+        traffic_light = next((obj for obj in current_tile_contents if isinstance(obj, Traffic_Light) and obj != self), None)
+        if current_road is None:
+            return False  # Not on a road, can't move
+        if traffic_light is not None and traffic_light.state == True:
+            return True  # Traffic light is green, can move
         direction = current_road.direction
 
         # Define potential move positions with diagonal options first
@@ -266,17 +249,8 @@ class Car(Agent):
             x, y = option
             if x >= 0 and y >= 0 and x < grid_width and y < grid_height:
                 if self.is_tile_empty_and_road(x, y):
-                    contents = self.model.grid.get_cell_list_contents((x, y))
-                    if any(isinstance(obj, Traffic_Light) for obj in contents):
-                        # Calculate the next position based on the traffic light
-                        next_position = self.calculate_next_position_based_on_traffic_light(x, y)
-                        if next_position and self.is_tile_empty_and_road(*next_position):
-                            self.model.grid.move_agent(self, next_position)
-                            return True
-                    else:
                         self.model.grid.move_agent(self, option)
                         return True
-
         return False
 
         
@@ -285,19 +259,7 @@ class Car(Agent):
         if self.current_step < len(self.path):
             next_position = self.path[self.current_step]
             x, y = next_position.x, next_position.y
-
-            # Check if the current position is a traffic light
-            current_tile_contents = self.model.grid.get_cell_list_contents([self.pos])
-            on_traffic_light = any(isinstance(obj, Traffic_Light) for obj in current_tile_contents)
-
-            if on_traffic_light:
-                # If on a traffic light, try moving to an adjacent tile
-                if self.try_moving_to_adjacent_tile():
-                    self.recalculate_path()
-                    self.waiting_time = 0
-                else:
-                    return  # Do nothing if the car is stuck
-            elif self.is_path_clear() and self.is_light_green():
+            if self.is_path_clear() and self.is_light_green():
                 # Normal movement logic
                 self.model.grid.move_agent(self, (x, y))
                 self.current_step += 1

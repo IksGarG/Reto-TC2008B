@@ -7,7 +7,7 @@ from carSimulation.agent import *
 from carSimulation.model import CityModel
 
 # Size of the board:
-module = 10
+module = 6
 cityModel = None
 currentStep = 0
 
@@ -36,7 +36,7 @@ def getAgents():
             # Asumiendo que cell_content es una lista de agentes
             for agent in cell_content:
                 if isinstance(agent, Car):
-                    position = {"id": str(agent.unique_id), "x": x, "y": 1, "z": z}
+                    position = {"id": str(agent.unique_id), "x": x, "y": 1, "z": z, "desx": agent.random_destination.pos[0], "desy":1, "desz": agent.random_destination.pos[1]}
                     agentPositions.append(position)
 
         return jsonify({'positions': agentPositions})

@@ -24,6 +24,7 @@ class CityModel(Model):
         self.world = create_world()
         self.kill_list = []
         self.module = module
+        self.steps_with_cars_in_positions = 0 
 
         # Load the map file. The map file is a text file where each character represents an agent.
         with open('static/city_files/2023_base.txt') as baseFile:
@@ -58,7 +59,9 @@ class CityModel(Model):
         self.running = True
         
     def add_car(self):
-        agent_positions = [(0, 0), (23, 0), (0, 24), (23, 24)]
+        # agent_positions = [(0, 0), (23, 0), (0, 24), (23, 24)]
+        agent_positions = [(0, 0)]
+        all_positions_have_cars = True
 
         for i, pos in enumerate(agent_positions):
             # Check the contents of the position
@@ -70,7 +73,17 @@ class CityModel(Model):
                 self.schedule.add(car)
                 self.grid.place_agent(car, pos)
                 self.next_agents += 2
-            else: self.next_agents += 2
+                all_positions_have_cars = False
+            self.next_agents += 2
+
+        if all_positions_have_cars:
+            self.steps_with_cars_in_positions += 1
+            if self.steps_with_cars_in_positions >= 20:
+                # Detener el modelo
+                self.running = False
+                print("Cars are stuck! Stopping the model.")
+        else:
+            self.steps_with_cars_in_positions = 0  # Resetear el contador si no todos tienen autos
 
 
     def step(self):

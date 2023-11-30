@@ -23,13 +23,17 @@ public class AgentData
     */
     public string id;
     public float x, y, z;
+    public float desx, desy, desz;
 
-    public AgentData(string id, float x, float y, float z)
+    public AgentData(string id, float x, float y, float z, float desx, float desy, float desz)
     {
         this.id = id;
         this.x = x;
         this.y = y;
         this.z = z;
+        this.desx = desx;
+        this.desy = desy;
+        this.desz = desz;
     }
 }
 [Serializable]
@@ -236,17 +240,24 @@ public class AgentController : MonoBehaviour
             foreach(AgentData agent in agentsData.positions)
             {
                 Vector3 newAgentPosition = new Vector3(agent.x, agent.y, agent.z);
+                Vector3 destinationPosition = new Vector3(agent.desx, agent.desy, agent.desz);
 
-                    if(!agents.ContainsKey(agent.id))//buscar si no existe el agente
+                if(!agents.ContainsKey(agent.id))
+                {
+                    prevPositions[agent.id] = newAgentPosition;
+                    agents[agent.id] = Instantiate(agentPrefab, Vector3.zero, Quaternion.identity);
+                    agents[agent.id].GetComponent<ApplyTransforms>().SetDestination(newAgentPosition, true);
+                }
+                else
+                {
+                    agents[agent.id].GetComponent<ApplyTransforms>().SetDestination(newAgentPosition, false);
+
+                    // Si el agente ha llegado a su destino final, inicia la corrutina para destruirlo
+                    if (Vector3.Distance(newAgentPosition, destinationPosition) <= 0.01f) 
                     {
-                        prevPositions[agent.id] = newAgentPosition;
-                        agents[agent.id] = Instantiate(agentPrefab, Vector3.zero, Quaternion.identity);
-                        agents[agent.id].GetComponent<ApplyTransforms>().SetDestination(newAgentPosition, true);
+                        StartCoroutine(DestroyAgentAfterDelay(agent.id, 1.0f));
                     }
-                    else
-                    {
-                        agents[agent.id].GetComponent<ApplyTransforms>().SetDestination(newAgentPosition, false);
-                    }
+                }
             }
 
             updated = true;
@@ -273,8 +284,6 @@ public class AgentController : MonoBehaviour
                 {
                     Vector3 newAgentPosition = new Vector3(agent.x, agent.y, agent.z);
                     bool state = agent.state;
-                    Debug.Log(state);
-
 
                         if(!agents.ContainsKey(agent.id))//buscar si no existe el agente
                         {
@@ -307,6 +316,21 @@ public class AgentController : MonoBehaviour
                 if(!started) started = true;
             }
         }
+
+        
+    IEnumerator DestroyAgentAfterDelay(string agentId, float delay)
+    {
+        // Esperar el tiempo especificado
+        yield return new WaitForSeconds(delay);
+
+        // Después de la espera, destruir el agente si todavía existe
+        if (agents.ContainsKey(agentId))
+        {
+            Debug.Log("Agent " + agentId + " has been destroyed after reaching its destination");
+            Destroy(agents[agentId]);
+            agents.Remove(agentId);
+        }
+    }
 
     // IEnumerator GetStateInfo() 
     // {

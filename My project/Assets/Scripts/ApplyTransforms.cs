@@ -122,7 +122,7 @@ public class ApplyTransforms : MonoBehaviour
 
         // Coordinates for each wheel
         Vector3 targetPos1 = new Vector3(-1.88f, -0.39f, -0.3f);
-        Vector3 targetPos2 = new Vector3(1.7f, -0.39f, 0.3f);
+        Vector3 targetPos2 = new Vector3(1.7f, -0.39f, -0.3f);
         Vector3 targetPos3 = new Vector3(1.81f, -0.39f, 6.19f);
         Vector3 targetPos4 = new Vector3(-1.52f, -0.39f, 6.19f);
 
@@ -210,10 +210,10 @@ public class ApplyTransforms : MonoBehaviour
             rotateObject = HW_Transforms.RotateMat(angle3, rotationAxis);
 
             composite = move * scale * rotateObject;
-            compositeWheel1 = move * rotateObject * scale * moveW1 * rotate;
-            compositeWheel2 = move * rotateObject * scale * moveW2 * rotate;
-            compositeWheel3 = move * rotateObject * scale * moveW3 * rotate;
-            compositeWheel4 = move * rotateObject * scale * moveW4 * rotate;
+            compositeWheel1 = move * rotateObject * scale * moveW1;
+            compositeWheel2 = move * rotateObject * scale * moveW2;
+            compositeWheel3 = move * rotateObject * scale * moveW3;
+            compositeWheel4 = move * rotateObject * scale * moveW4;
         }
 
 
