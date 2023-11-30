@@ -131,7 +131,8 @@ public class AgentController : MonoBehaviour
 
     bool updated = false, started = false;
 
-    public GameObject agentPrefab, trafficLPrefab, floor;
+    public GameObject[] agentPrefab;
+    public GameObject trafficLPrefab, floor;
     public int NAgents, width, height;
     public int Module = 10;
     public float timeToUpdate = 5.0f;
@@ -244,8 +245,9 @@ public class AgentController : MonoBehaviour
 
                 if(!agents.ContainsKey(agent.id))
                 {
+                    int rand = UnityEngine.Random.Range(0, agentPrefab.Length);
                     prevPositions[agent.id] = newAgentPosition;
-                    agents[agent.id] = Instantiate(agentPrefab, Vector3.zero, Quaternion.identity);
+                    agents[agent.id] = Instantiate(agentPrefab[rand], Vector3.zero, Quaternion.identity);
                     agents[agent.id].GetComponent<ApplyTransforms>().SetDestination(newAgentPosition, true);
                 }
                 else
@@ -259,7 +261,6 @@ public class AgentController : MonoBehaviour
                     }
                 }
             }
-
             updated = true;
             if(!started) started = true;
         }
