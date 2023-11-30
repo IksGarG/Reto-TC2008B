@@ -137,7 +137,7 @@ public class ApplyTransforms : MonoBehaviour
 
 
         // Lerp ------------------------------------------------------
-        moveTime=1f;
+        moveTime=1.0f;
         t = elapsedTime / moveTime;
         // Use a function to smooth the movement
         //t = t * t * (3.0f - 2.0f * t);

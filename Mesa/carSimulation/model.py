@@ -61,7 +61,7 @@ class CityModel(Model):
         
     def add_car(self):
         agent_positions = [(0, 0), (23, 0), (0, 24), (23, 24)]
-            # agent_positions = [(0, 0)]
+        #agent_positions = [(0, 0)]
         all_positions_have_cars = True
 
         for i, pos in enumerate(agent_positions):

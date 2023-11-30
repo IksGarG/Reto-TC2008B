@@ -338,13 +338,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 983bc179e80f15347a79dd7b044746e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  agentPrefab: {fileID: 6346842251625569310, guid: 73ef00bbcf2db4fe2bbd62fc0a7dd3e8, type: 3}
+  agentPrefab:
+  - {fileID: 6346842251625569310, guid: 73ef00bbcf2db4fe2bbd62fc0a7dd3e8, type: 3}
+  - {fileID: 3635425113349263324, guid: 702050a4d5b3344ee93b02b8cce6d75a, type: 3}
+  - {fileID: 7493914645421240773, guid: 8d79f96f5393e493493d9bff38728e68, type: 3}
+  - {fileID: 1833627121909683784, guid: 0d239b124c289494cbb9f7f4d0d5362a, type: 3}
   trafficLPrefab: {fileID: 6002354277212606353, guid: 222993012d90340f5a3954432f686faa, type: 3}
   floor: {fileID: 3240343348373693069, guid: 646fc54ff3078ce94bbdbd0f0d4c4a05, type: 3}
   NAgents: 0
   width: 23
   height: 24
-  Module: 5
+  Module: 4
   timeToUpdate: 1
 --- !u!4 &605910796
 Transform:
@@ -395,7 +399,9 @@ MonoBehaviour:
   layout: {fileID: 4900000, guid: 5c1a5622a173548ac826d7c6dde9da9d, type: 3}
   roadPrefab: {fileID: 3240343348373693069, guid: 646fc54ff3078ce94bbdbd0f0d4c4a05, type: 3}
   buildingPrefab:
-  - {fileID: 33555395739272859, guid: 10a584233fb38a918af771ddce837268, type: 3}
+  - {fileID: 919132149155446097, guid: 7f8325aee2b6a491e8e7fd0ebc7654c9, type: 3}
+  - {fileID: 919132149155446097, guid: a5d6d771f46264bda919ad9776af778f, type: 3}
+  - {fileID: 919132149155446097, guid: ddda54d22141d47d3811a187aa425dbe, type: 3}
   semaphorePrefab: {fileID: 8102729382312259521, guid: ec03db3fda9c46458bf4fb4f61cc11bd, type: 3}
   tileSize: 1
 --- !u!4 &1457529884
