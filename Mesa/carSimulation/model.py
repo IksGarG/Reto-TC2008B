@@ -16,7 +16,7 @@ class CityModel(Model):
     def __init__(self, module):
 
         # Load the map dictionary. The dictionary maps the characters in the map file to the corresponding agent.
-        dataDictionary = json.load(open("carSimulation/city_files/mapDictionary.json"))
+        dataDictionary = json.load(open("static/city_files/mapDictionary.json"))
 
         self.traffic_lights = []
         self.next_agents = 0
@@ -26,7 +26,7 @@ class CityModel(Model):
         self.module = module
 
         # Load the map file. The map file is a text file where each character represents an agent.
-        with open('carSimulation/city_files/2023_base.txt') as baseFile:
+        with open('static/city_files/2023_base.txt') as baseFile:
             lines = baseFile.readlines()
             self.width = len(lines[0])-1
             self.height = len(lines)
