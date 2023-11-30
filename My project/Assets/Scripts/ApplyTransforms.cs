@@ -49,6 +49,9 @@ public class ApplyTransforms : MonoBehaviour
     Vector3[] baseVerticesW4;
     Vector3[] newVerticesW4;
 
+    private float timer, dt;
+    private float angle3;
+
 
 
 
@@ -134,30 +137,24 @@ public class ApplyTransforms : MonoBehaviour
 
 
         // Lerp ------------------------------------------------------
-        moveTime=2.0f;
+        moveTime=1f;
         t = elapsedTime / moveTime;
         // Use a function to smooth the movement
         //t = t * t * (3.0f - 2.0f * t);
 
         // Interpolation function
-        Vector3 position = startPos + (finalPos - startPos) * t;
+        // Vector3 position = startPos + (finalPos - startPos) * t;
+        Vector3 interpolated = Vector3.Lerp(startPos, finalPos, t);
 
         // To move using matrix tansformations, put the vector 3 into a 
         //  translation matrix, and apply to the vertices
-        Matrix4x4 move = HW_Transforms.TranslationMat(position.x, position.y, position.z);
+        Matrix4x4 move = HW_Transforms.TranslationMat(interpolated.x, interpolated.y, interpolated.z);
 
         // Update time
         elapsedTime += Time.deltaTime;
 
-        // When the time has passed, change to another destination
-        if (elapsedTime > moveTime) {
-            //elapsedTime = moveTime;
-            elapsedTime = 0.0f;
 
-            Vector3 temp = finalPos;
-            finalPos = startPos;
-            startPos = temp;
-        }
+
        // ------------------------------------------------------
         //Matrix4x4 move = HW_Transforms.TranslationMat(displacement.x * Time.time, displacement.y * Time.time, displacement.z * Time.time);
 
@@ -168,12 +165,9 @@ public class ApplyTransforms : MonoBehaviour
         Matrix4x4 rotateCar = HW_Transforms.RotateMat(giro, rotationAxis);
 
         Vector3 rotationVector = new Vector3(0,0,0);
-        rotationVector = finalPos - startPos;
-        
-        float angleRadians = Mathf.Atan2(rotationVector.x, rotationVector.z);
-        float angleNig = angleRadians * Mathf.Rad2Deg;
-
-        Matrix4x4 rotateObject = HW_Transforms.RotateMat(angleNig, rotationAxis);
+        float angleRadians;
+        float angle2;
+        Matrix4x4 rotateObject;
         
         
         
@@ -184,13 +178,43 @@ public class ApplyTransforms : MonoBehaviour
 
         Matrix4x4 scale = HW_Transforms.ScaleMat(0.09f, 0.09f, 0.09f);
         
-        Matrix4x4 composite = move * scale * rotateObject;
+        Matrix4x4 composite;
 
-        Matrix4x4 compositeWheel1 = move * rotateObject * scale * moveW1 * rotate;
-        Matrix4x4 compositeWheel2 = move * rotateObject * scale * moveW2 * rotate;
-        Matrix4x4 compositeWheel3 = move * rotateObject * scale * moveW3 * rotate;
-        Matrix4x4 compositeWheel4 = move * rotateObject * scale * moveW4 * rotate;
+        Matrix4x4 compositeWheel1;
+        Matrix4x4 compositeWheel2;
+        Matrix4x4 compositeWheel3;
+        Matrix4x4 compositeWheel4;
 
+        Vector3 rotationVectorPrev = new Vector3(0,0,0);
+
+
+        if (startPos != finalPos)
+        {        
+            rotationVector = finalPos - startPos;
+            angleRadians = Mathf.Atan2(rotationVector.x, rotationVector.z);
+            angle2 = angleRadians * Mathf.Rad2Deg;
+            rotateObject = HW_Transforms.RotateMat(angle2, rotationAxis);
+
+            composite = move * scale * rotateObject;
+
+            compositeWheel1 = move * rotateObject * scale * moveW1 * rotate;
+            compositeWheel2 = move * rotateObject * scale * moveW2 * rotate;
+            compositeWheel3 = move * rotateObject * scale * moveW3 * rotate;
+            compositeWheel4 = move * rotateObject * scale * moveW4 * rotate;
+
+            angle3 = angle2;
+        }
+        else
+        {   
+
+            rotateObject = HW_Transforms.RotateMat(angle3, rotationAxis);
+
+            composite = move * scale * rotateObject;
+            compositeWheel1 = move * rotateObject * scale * moveW1 * rotate;
+            compositeWheel2 = move * rotateObject * scale * moveW2 * rotate;
+            compositeWheel3 = move * rotateObject * scale * moveW3 * rotate;
+            compositeWheel4 = move * rotateObject * scale * moveW4 * rotate;
+        }
 
 
 
@@ -267,6 +291,7 @@ public class ApplyTransforms : MonoBehaviour
         {
             startPos = finalPos;
             finalPos = destination;
+            elapsedTime = 0.0f;
         }
     }
 }
