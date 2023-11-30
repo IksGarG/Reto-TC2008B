@@ -24,7 +24,8 @@ class CityModel(Model):
         self.world = create_world()
         self.kill_list = []
         self.module = module
-        self.steps_with_cars_in_positions = 0 
+        self.steps_with_cars_in_positions = 0
+        self.cars_in_destinations = 0
 
         # Load the map file. The map file is a text file where each character represents an agent.
         with open('static/city_files/2023_base.txt') as baseFile:
@@ -59,8 +60,8 @@ class CityModel(Model):
         self.running = True
         
     def add_car(self):
-        # agent_positions = [(0, 0), (23, 0), (0, 24), (23, 24)]
-        agent_positions = [(0, 0)]
+        agent_positions = [(0, 0), (23, 0), (0, 24), (23, 24)]
+            # agent_positions = [(0, 0)]
         all_positions_have_cars = True
 
         for i, pos in enumerate(agent_positions):
@@ -89,9 +90,12 @@ class CityModel(Model):
     def step(self):
         '''Advance the model by one step.'''
         while self.kill_list:
+            self.cars_in_destinations += 1
             agent = self.kill_list.pop()
             self.schedule.remove(agent)
             self.grid.remove_agent(agent)
         if self.schedule.steps % self.module == 0:
             self.add_car()
+        if self.schedule.steps == 1000:
+            self.running = False
         self.schedule.step()

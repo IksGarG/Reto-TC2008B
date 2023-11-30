@@ -23,7 +23,7 @@ class Car(Agent):
         self.random_destination, self.road_near_destination = self.destination()
         self.init_path_gen()
         self.waiting_time = 0
-        self.hidden_possible_coords = [(9, 16), (10, 16), (12, 11), (12, 12), (17, 11), (17, 12), (12, 8), (12, 9), (8, 8), (8, 11), (8, 12)]
+        self.hidden_possible_coords = [(9, 16), (10, 16), (12, 11), (12, 12), (17, 11), (17, 12), (12, 8), (12, 9), (8, 8), (8, 9), (8, 11), (8, 12)]
 
     def grid_cleanup(self, world):
         for grid in world.grids.values():
@@ -255,7 +255,7 @@ class Car(Agent):
 
         
     def move(self):
-        max_waiting_time = self.random.randint(10, 20)  # Random value for different driver behaviors
+        max_waiting_time = self.random.randint(13, 14)  # Random value for different driver behaviors
         if self.current_step < len(self.path):
             next_position = self.path[self.current_step]
             x, y = next_position.x, next_position.y
