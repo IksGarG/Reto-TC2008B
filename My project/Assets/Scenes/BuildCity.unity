@@ -339,13 +339,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agentPrefab: {fileID: 6346842251625569310, guid: 73ef00bbcf2db4fe2bbd62fc0a7dd3e8, type: 3}
-  obstaclePrefab: {fileID: 0}
+  trafficLPrefab: {fileID: 6002354277212606353, guid: 222993012d90340f5a3954432f686faa, type: 3}
   floor: {fileID: 3240343348373693069, guid: 646fc54ff3078ce94bbdbd0f0d4c4a05, type: 3}
   NAgents: 0
   width: 23
   height: 24
-  Module: 10
-  timeToUpdate: 5
+  Module: 5
+  timeToUpdate: 1
 --- !u!4 &605910796
 Transform:
   m_ObjectHideFlags: 0
@@ -355,7 +355,7 @@ Transform:
   m_GameObject: {fileID: 605910794}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.7519493, y: -5.2701797, z: 0.93717}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -392,7 +392,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   carPrefab:
   - {fileID: 6346842251625569310, guid: 73ef00bbcf2db4fe2bbd62fc0a7dd3e8, type: 3}
-  layout: {fileID: 4900000, guid: 1bd49f2e04cdbec48bb774669bd2140d, type: 3}
+  layout: {fileID: 4900000, guid: 5c1a5622a173548ac826d7c6dde9da9d, type: 3}
   roadPrefab: {fileID: 3240343348373693069, guid: 646fc54ff3078ce94bbdbd0f0d4c4a05, type: 3}
   buildingPrefab:
   - {fileID: 33555395739272859, guid: 10a584233fb38a918af771ddce837268, type: 3}
