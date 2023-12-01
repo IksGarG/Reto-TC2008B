@@ -13,7 +13,7 @@ endpoint = "api/attempts"
 
 
 # Size of the board:
-module = 6
+module = 5
 cityModel = None
 currentStep = 0
 
@@ -30,7 +30,7 @@ def initModel():
         print(module)
         cityModel = CityModel(module)
 
-        return jsonify({"message":"Parameters recieved, model initiated."})
+        return jsonify({"message":"Parameters received, model initiated."})
 
 @app.route('/getAgents', methods=['GET'])
 def getAgents():
@@ -68,20 +68,6 @@ def updateModel():
     if request.method == 'GET':
         cityModel.step()
         currentStep += 1
-        if currentStep % 10 == 0:
-            data = {
-                "year" : 2023,
-                "classroom" : 302,
-                "name" : "Hoy Queda 💀",
-                "num_cars": cityModel.cars_in_destinations
-            }
-                        
-            headers = {
-                "Content-Type": "application/json"
-            }
-            response = requests.post(url+endpoint, data=json.dumps(data), headers=headers)
-            print("Request " + "successful" if response.status_code == 200 else "failed", "Status code:", response.status_code)
-            print("Response:", response.json())
-        return jsonify({'message': f'Model updated to step {currentStep}.', 'currentStep': currentStep})
+        return jsonify({'message': 'Model updated'})
 if __name__=='__main__':
     app.run(host="localhost", port=8585, debug=True)
