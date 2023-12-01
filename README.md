@@ -15,3 +15,10 @@
 ## Software y librerias
  Para la simulación se usa python con la librería de Mesa. \
  Y para la visualización se usa Unity.
+
+ ## Simulación en Unity
+ Para poder correr la simulación desde Unity es necesario hacer lo siguiente dentro de la carpeta del repositorio:
+        
+        python Mesa/server.py
+
+Una vez hecho esto ya se pude iniciar la escena de BuildCity
